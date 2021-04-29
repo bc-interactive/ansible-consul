@@ -1,0 +1,46 @@
+---
+
+- apt:
+    name: ["unzip"]
+    state: present
+    install_recommends: no
+
+- get_url:
+    url: "https://releases.hashicorp.com/consul/{{ consul_version}}/consul_{{ consul_version }}_linux_amd64.zip"
+    dest: "/tmp/consul_{{ consul_version }}_linux_amd64.zip"
+    mode: 0644
+    checksum: "sha256:https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_SHA256SUMS"
+
+- unarchive:
+    src: "/tmp/consul_{{ consul_version }}_linux_amd64.zip"
+    dest: /usr/local/bin/
+    remote_src: yes
+    owner: root
+    group: root
+    mode: 0755
+
+- group:
+    name: "{{ consul_group }}"
+    state: present
+    system: yes
+
+- user:
+    name: "{{ consul_user }}"
+    state: present
+    group: "{{ consul_group }}"
+    system: yes
+
+- template:
+    src: consul.service.j2
+    dest: /lib/systemd/system/consul.service
+    owner: root
+    group: root
+    mode: 0644
+
+- systemd:
+    daemon_reload: true
+
+- service:
+    name: consul
+    enabled: true
+    state: started
